@@ -1,13 +1,14 @@
+#include "ColorAberrationCorrection.h"
 
-void rmCA(std::vector<cv::Mat> &bgrVec, int threshold)
+void CAC::rmCA(std::vector<cv::Mat> &bgrVec, int threshold)
 {
 	int height = bgrVec[0].rows, width = bgrVec[0].cols;
 
 	for (int i = 0; i < height; ++i)
 	{
-		uchar *bptr = bgrVec[0].ptr<uchar>(i);
-		uchar *gptr = bgrVec[1].ptr<uchar>(i);
-		uchar *rptr = bgrVec[2].ptr<uchar>(i);
+		unsigned char *bptr = bgrVec[0].ptr<unsigned char>(i);
+		unsigned char *gptr = bgrVec[1].ptr<unsigned char>(i);
+		unsigned char *rptr = bgrVec[2].ptr<unsigned char>(i);
 
 		for (int j = 1; j < width - 1; ++j)
 		{
@@ -53,9 +54,9 @@ void rmCA(std::vector<cv::Mat> &bgrVec, int threshold)
 
 					//Replace the B or R value if its color difference of R/G and B/G is bigger(smaller)
 					//than maximum(minimum) of color difference on range boundary
-					bptr[k] = cv::saturate_cast<uchar>( bdiff > bgmaxVal ? bgmaxVal + gptr[k] : 
+					bptr[k] = cv::saturate_cast<unsigned char>( bdiff > bgmaxVal ? bgmaxVal + gptr[k] : 
 						(bdiff < bgminVal ? bgminVal + gptr[k] : bptr[k]) );
-					rptr[k] = cv::saturate_cast<uchar>( rdiff > rgmaxVal ? rgmaxVal + gptr[k] : 
+					rptr[k] = cv::saturate_cast<unsigned char>( rdiff > rgmaxVal ? rgmaxVal + gptr[k] : 
 						(rdiff < rgminVal ? rgminVal + gptr[k] : rptr[k]) );			
 				}
 				j = rpos - 2;
@@ -64,7 +65,7 @@ void rmCA(std::vector<cv::Mat> &bgrVec, int threshold)
 	}
 }
 
-void CACorrection(cv::Mat &Src, cv::Mat &Dst)
+void CAC::CACorrection(cv::Mat &Src, cv::Mat &Dst)
 {
 	std::vector<cv::Mat> bgrVec(3);
 	//split the color image into individual color channel for convenient in calculation
@@ -73,14 +74,14 @@ void CACorrection(cv::Mat &Src, cv::Mat &Dst)
 	//setting threshold to find the edge and correction range(in g channel)
 	int threshold = 30;
 
-	rmCA(bgrVec, threshold);
+	CAC::rmCA(bgrVec, threshold);
 
 	//transpose the R,G B channel image to correct chromatic aberration in vertical direction 
 	bgrVec[0] = bgrVec[0].t();
 	bgrVec[1] = bgrVec[1].t();
 	bgrVec[2] = bgrVec[2].t();
 
-	rmCA(bgrVec, threshold);
+	CAC::rmCA(bgrVec, threshold);
 
 	cv::merge(bgrVec, Dst);
 	//rotate the image back to original position
